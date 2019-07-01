@@ -22,7 +22,7 @@ class Encoder(private val context: Context, private val onError: (Stage) -> Disp
             resultFile.delete()
         }
         val status = FFmpeg.execute("-i ${data.fullPath} -c:v mpeg4 ${data.resultFilePath}")
-        if (status != 0 && status != 2) {
+        if (status != FFmpeg.RETURN_CODE_SUCCESS && status != FFmpeg.RETURN_CODE_CANCEL) {
             onError(Stage.CONVERT)
         }
         executionThread = null
