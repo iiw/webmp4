@@ -3,7 +3,8 @@
     <string name="app_name">WebMP4</string>
     <string name="select_webm">Выбрать WebM</string>
     <string name="convert">Конвертировать в MP4</string>
-    <string name="save">Сохранить</string>
+    <string name="convert_file_error">Произошла ошибка при конвертировании файла. Что-то пошло не так…</string>
+    <string name="share">Поделиться</string>
     <string name="reset_button">Сброс</string>
     <string name="file_not_selected">Файл не выбран</string>
 </resources>
