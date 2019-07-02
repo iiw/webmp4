@@ -5,19 +5,17 @@ import ac.summer.webmp4.android.ShareUtils
 import ac.summer.webmp4.android.Toaster
 import ac.summer.webmp4.data.Encoder
 import ac.summer.webmp4.data.FileData
-import ac.summer.webmp4.ui.ProgressParser
 import ac.summer.webmp4.ui.Stage
 import android.app.Activity
 import android.content.Intent
 import android.os.Bundle
 import android.support.v7.app.AppCompatActivity
 import android.view.View
-import com.arthenica.mobileffmpeg.FFmpeg
 import io.reactivex.android.schedulers.AndroidSchedulers.mainThread
+import io.reactivex.disposables.CompositeDisposable
+import io.reactivex.schedulers.Schedulers
+import io.reactivex.subjects.PublishSubject
 import kotlinx.android.synthetic.main.activity_main.*
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
 import java.util.logging.Logger
 import kotlin.concurrent.thread
 
@@ -26,10 +24,11 @@ class MainActivity : AppCompatActivity() {
     private val logger by lazy {
         Logger.getLogger("Main")
     }
-    private val encoder by lazy { Encoder(applicationContext, ::onError) }
+    private val encoder by lazy { Encoder(::onError) }
     private val permissionsManager by lazy { PermissionsManager(this) }
     private val toaster by lazy { Toaster(applicationContext) }
     private val shareUtils by lazy { ShareUtils(applicationContext, this) }
+    private var disposable = CompositeDisposable()
 
     private val selectWebmString by lazy {
         resources.getString(R.string.select_webm)
@@ -52,6 +51,29 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
         setStage(stage)
+        disposable.addAll(
+            observableOperationStatus
+                .subscribeOn(Schedulers.io())
+                .unsubscribeOn(Schedulers.io())
+                .observeOn(mainThread())
+                .subscribe { success ->
+                    if (success) {
+                        setStage(Stage.CONVERT_SUCCESS)
+                    }
+                },
+            WebMP4Application.progress
+                .subscribeOn(Schedulers.io())
+                .unsubscribeOn(Schedulers.io())
+                .observeOn(mainThread())
+                .subscribe {
+                    progress_bar.progress = it
+                }
+        )
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        disposable.dispose()
     }
 
     fun onAction(view: View) {
@@ -66,33 +88,17 @@ class MainActivity : AppCompatActivity() {
             Stage.SELECT_FILE_SUCCESS -> {
                 permissionsManager.checkWriteExternalPermissions()
                 setStage(Stage.CONVERT)
-                var success: Boolean? = null
-                GlobalScope.launch {
-                    while (success == null) {
-                        val progress = ProgressParser.getProgress(FFmpeg.getLastCommandOutput())
-                        if (progress != null) {
-                            mainThread().scheduleDirect {
-                                progress_bar.progress = progress
-                            }
-                        }
-                        delay(50)
-                    }
-                }
                 thread {
-                    Thread.sleep(500)
-                    success = encoder.startEncoding(file)
-                    if (success == true) {
-                        mainThread().scheduleDirect {
-                            setStage(Stage.CONVERT_SUCCESS)
-                        }
-                    }
+                    observableOperationStatus.onNext(encoder.startEncoding(file))
                 }
+            }
+            Stage.CONVERT -> {
+
             }
             Stage.CONVERT_SUCCESS -> {
                 shareUtils.share(file)
             }
-            else -> {
-            }
+
         }
     }
 
@@ -120,35 +126,29 @@ class MainActivity : AppCompatActivity() {
     private fun setStage(stage: Stage) {
         MainActivity.stage = stage
         logger.info("STAGE SET: $stage")
+
+        filename.text = getFileName()
+        action_button.isEnabled = true
+        progress_bar.progress = 0
+        progress_bar.visibility = View.INVISIBLE
+        reset.visibility = View.VISIBLE
         when (stage) {
             Stage.SELECT_FILE -> {
                 file = null
                 reset.visibility = View.GONE
                 filename.text = fileNotSelectedString
                 action_button.text = selectWebmString
-                action_button.isEnabled = true
-                progress_bar.visibility = View.INVISIBLE
-                progress_bar.progress = 0
             }
             Stage.SELECT_FILE_SUCCESS -> {
                 action_button.text = convertString
-                action_button.isEnabled = true
-                progress_bar.visibility = View.INVISIBLE
-                progress_bar.progress = 0
-                filename.text = getFileName()
-                reset.visibility = View.VISIBLE
             }
             Stage.CONVERT -> {
                 action_button.isEnabled = false
                 progress_bar.visibility = View.VISIBLE
+                progress_bar.progress = file?.lastProgress ?: 0
             }
             Stage.CONVERT_SUCCESS -> {
-                action_button.isEnabled = true
-                progress_bar.visibility = View.INVISIBLE
                 action_button.text = shareString
-                progress_bar.progress = 0
-            }
-            else -> {
             }
         }
     }
@@ -178,6 +178,7 @@ class MainActivity : AppCompatActivity() {
     companion object {
         private const val OPEN_WEBM = 2
         private var stage = Stage.SELECT_FILE
-        private var file: FileData? = null
+        var file: FileData? = null
+        private var observableOperationStatus = PublishSubject.create<Boolean>()
     }
 }

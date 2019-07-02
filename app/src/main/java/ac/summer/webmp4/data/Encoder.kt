@@ -1,14 +1,12 @@
 package ac.summer.webmp4.data
 
 import ac.summer.webmp4.ui.Stage
-import android.content.Context
 import android.os.Environment
 import com.arthenica.mobileffmpeg.FFmpeg
 import io.reactivex.disposables.Disposable
 import java.io.File
 
-class Encoder(private val context: Context, private val onError: (Stage) -> Disposable) {
-    private var executionThread: Thread? = null
+class Encoder(private val onError: (Stage) -> Disposable) {
     fun startEncoding(data: FileData?): Boolean {
         if (data == null) {
             onError(Stage.SELECT_FILE)
@@ -21,6 +19,8 @@ class Encoder(private val context: Context, private val onError: (Stage) -> Disp
         if (resultFile.exists()) {
             resultFile.delete()
         }
+        val information = FFmpeg.getMediaInformation(data.fullPath)
+        data.durationMillis = information.duration
         val status = FFmpeg.execute(arrayOf("-i", data.fullPath, "-c:v", "mpeg4", data.resultFilePath))
         if (status != FFmpeg.RETURN_CODE_SUCCESS && status != FFmpeg.RETURN_CODE_CANCEL) {
             onError(Stage.CONVERT)
@@ -29,11 +29,17 @@ class Encoder(private val context: Context, private val onError: (Stage) -> Disp
         return status == FFmpeg.RETURN_CODE_SUCCESS
     }
 
+
+
     fun stop() {
         FFmpeg.cancel()
     }
 
     fun ongoing(): Boolean {
         return executionThread != null
+    }
+
+    companion object {
+        private var executionThread: Thread? = null
     }
 }
