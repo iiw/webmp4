@@ -6,7 +6,7 @@ import ac.summer.webmp4.data.FileData
 import android.content.Context
 import android.net.Uri
 import android.os.StrictMode
-import android.support.v4.app.ShareCompat
+import androidx.core.app.ShareCompat
 import java.io.File
 
 

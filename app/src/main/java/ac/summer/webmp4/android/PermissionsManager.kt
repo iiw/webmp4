@@ -3,7 +3,7 @@ package ac.summer.webmp4.android
 import ac.summer.webmp4.MainActivity
 import android.Manifest
 import android.os.Build
-import android.support.v4.app.ActivityCompat
+import androidx.core.app.ActivityCompat
 
 class PermissionsManager(private val activity: MainActivity) {
     fun checkReadExternalPermissions() {
