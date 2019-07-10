@@ -2,24 +2,16 @@ package ac.summer.webmp4.android
 
 import ac.summer.webmp4.MainActivity
 import android.Manifest
-import android.os.Build
 import androidx.core.app.ActivityCompat
 
 class PermissionsManager(private val activity: MainActivity) {
-    fun checkReadExternalPermissions() {
-        if (Build.VERSION.SDK_INT >= 16) {
-            ActivityCompat.requestPermissions(
-                activity,
-                arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE),
-                0
-            )
-        }
-    }
-
-    fun checkWriteExternalPermissions() {
+    fun checkPermissions() {
         ActivityCompat.requestPermissions(
             activity,
-            arrayOf(Manifest.permission.WRITE_EXTERNAL_STORAGE),
+            arrayOf(
+                Manifest.permission.READ_EXTERNAL_STORAGE,
+                Manifest.permission.WRITE_EXTERNAL_STORAGE
+            ),
             0
         )
     }

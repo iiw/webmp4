@@ -80,13 +80,13 @@ class MainActivity : AppCompatActivity() {
         logger.info("Button click.")
         when (stage) {
             Stage.SELECT_FILE -> {
-                permissionsManager.checkReadExternalPermissions()
+                permissionsManager.checkPermissions()
                 val intent = Intent(Intent.ACTION_GET_CONTENT)
                 intent.type = "video/webm"
                 startActivityForResult(intent, OPEN_WEBM)
             }
             Stage.SELECT_FILE_SUCCESS -> {
-                permissionsManager.checkWriteExternalPermissions()
+                permissionsManager.checkPermissions()
                 setStage(Stage.CONVERT)
                 thread {
                     observableOperationStatus.onNext(encoder.startEncoding(file))
