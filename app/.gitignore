@@ -1,2 +1,4 @@
 /build
 /release/app.aab
+/release/app-release.apk
+/release/output.json
