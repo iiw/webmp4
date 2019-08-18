@@ -50,6 +50,8 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+        version_field.text = applicationContext.packageManager
+            .getPackageInfo(applicationContext.packageName, 0).versionName
         setStage(stage)
         disposable.addAll(
             observableOperationStatus
@@ -89,7 +91,14 @@ class MainActivity : AppCompatActivity() {
                 permissionsManager.checkPermissions()
                 setStage(Stage.CONVERT)
                 thread {
+//                    try {
                     observableOperationStatus.onNext(encoder.startEncoding(file))
+//                    } catch(t: Throwable) {
+//                        mainThread().scheduleDirect {
+//                            error.visibility = View.VISIBLE
+//                            error_view.text = "${file?.fullPath}\n Error: \n${t.stackTrace.joinToString("\n")}"
+//                        }
+//                    }
                 }
             }
             Stage.CONVERT -> {
@@ -100,6 +109,10 @@ class MainActivity : AppCompatActivity() {
             }
 
         }
+    }
+
+    fun closeError(view: View) {
+        error.visibility = View.GONE
     }
 
     fun resetStage(view: View) {

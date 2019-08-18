@@ -1,6 +1,7 @@
 package ac.summer.webmp4.data
 
 import ac.summer.webmp4.ui.Stage
+import android.os.Build
 import android.os.Environment
 import com.arthenica.mobileffmpeg.FFmpeg
 import io.reactivex.disposables.Disposable
@@ -20,7 +21,7 @@ class Encoder(private val onError: (Stage) -> Disposable) {
             resultFile.delete()
         }
         val information = FFmpeg.getMediaInformation(data.fullPath)
-        data.durationMillis = information.duration
+        data.durationMillis = information?.duration ?: 60000
         val status = FFmpeg.execute(arrayOf("-i", data.fullPath, "-c:v", "mpeg4", data.resultFilePath))
         if (status != FFmpeg.RETURN_CODE_SUCCESS && status != FFmpeg.RETURN_CODE_CANCEL) {
             onError(Stage.CONVERT)
