@@ -9,6 +9,7 @@ import ac.summer.webmp4.ui.Stage
 import android.app.Activity
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import android.view.View
 import androidx.appcompat.app.AppCompatActivity
 import io.reactivex.android.schedulers.AndroidSchedulers.mainThread
@@ -93,6 +94,12 @@ class MainActivity : AppCompatActivity() {
                 thread {
 //                    try {
                     observableOperationStatus.onNext(encoder.startEncoding(file))
+                    applicationContext.cacheDir.deleteRecursively()
+                    try {
+                        applicationContext.cacheDir.createNewFile()
+                    } catch(t: Throwable) {
+                        Log.e("MainActivity.createCacheDir", "Error on createNewFile cache", t)
+                    }
 //                    } catch(t: Throwable) {
 //                        mainThread().scheduleDirect {
 //                            error.visibility = View.VISIBLE
